@@ -58,10 +58,50 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
             {
                 int id = this.id + 1;
                 this.id+=1;
-                Block block = new Block(id, toSetX,toSetY,blockWidth,blockHeight,this,10);
+                Block block = new Block(id, toSetX,toSetY,blockWidth,blockHeight,this,levelToSet);
                 blocks.add(block);
                 block.sendPacket();
                 block.updateColors();
+            }
+
+        }
+        if(selected ==5)
+        {
+
+
+            boolean OK = false;
+
+
+            int toSetX = -1;
+            int toSetY = -1;
+            for(int i = 0; i<=1000; i+=blockWidth)
+            {
+                for(int j = 0; j<=700; j+=blockHeight)
+                {
+                    if(isBetween(i-3, event.getX(), i+3))
+                    {
+                        if(isBetween(j-3,event.getY(),j+3))
+                        {
+                            toSetX = i;
+                            toSetY = j;
+                        }
+                    }
+                }
+            }
+            Block block = null;
+            for(Block b : blocks)
+            {
+                if(b.getRectangle().contains(new Point(toSetX,toSetY)))
+                {
+                    block = b;
+                    OK = true;
+                }
+            }
+
+            if(OK)
+            {
+                remove(blockLabels.get(block.getId()));
+                blocks.remove(block);
             }
 
         }
@@ -93,7 +133,7 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
 
         try {
             lines = new ArrayList<String>();
-            BufferedReader br = new BufferedReader(new FileReader(new File(System.getenv("APPDATA") + "\\" + name + ".txt")));
+            BufferedReader br = new BufferedReader(new FileReader(new File(System.getProperty("user.home") + "/" + name + ".txt")));
             String line;
             while ((line = br.readLine()) != null) {
                 lines.add(line);
@@ -212,14 +252,18 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
 
     JButton levelMode = new JButton("Level Mode");
     boolean isEditingLevel = false;
+
+    JButton deleteBlock = new JButton("Delete Blocks");
+    JTextField boxLevel = new JTextField();
+
     public void saveLevel(String s)
     {
         String words = "";
         for(Block block : blocks)
         {
-            words+=block.getX() + ":" + block.getY() + ":" + block.getLevel() + System.lineSeparator();
+            words+=block.getX() + ":" + block.getY() + ":" + block.getLevel() + System.getProperty("line.separator");
         }
-        File file = new File(System.getenv("APPDATA") + "\\" + s + ".txt");
+        File file = new File(System.getProperty("user.home") + "/" + s + ".txt");
         if(!file.exists())
         {
             try
@@ -243,13 +287,16 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
 
         if(isEditingLevel)
         {
+            y = 0;
+            x = 0;
             levelMode.setText("Save...");
             breakAllBlocks();
         }
         else
         {
+
             levelMode.setText("Level Mode");
-            final JFrame name = new JFrame();
+            final JFrame name = new JFrame("Set a name...");
             name.setVisible(true);
             name.setBounds(0,0,200,200);
 
@@ -267,6 +314,8 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
                     {
                         saveLevel(field.getText());
                         name.dispose();
+                        y = 1;
+                        x = 1;
                     }
                 }
 
@@ -280,6 +329,7 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
         }
 
     }
+    int levelToSet = 10;
     public void startClient()
     {
         optionBox.setTitle("Options...");
@@ -292,7 +342,9 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
         optionBox.add(levelMode);
         optionBox.add(addBlock);
         optionBox.add(loadLevel);
-        int height = 500 / 7;
+        optionBox.add(boxLevel);
+        optionBox.add(deleteBlock);
+        int height = 500 / 9;
         ballSelect.setBounds(0, height * 0, 200, height);
         paddle1Select.setBounds(0,height * 1,200,height);
         paddle2Select.setBounds(0,height * 2,200,height);
@@ -300,7 +352,34 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
         levelMode.setBounds(0,height*5,200,height);
         velocity.setBounds(0,height*4,200,height);
         loadLevel.setBounds(0,height*6,200,height);
+        deleteBlock.setBounds(0,height*7,200,height);
+        boxLevel.setBounds(0,height*8,200,height);
 
+        deleteBlock.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                selected = 5;
+            }
+        });
+        boxLevel.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent event) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if(event.getKeyCode()==KeyEvent.VK_ENTER)
+                {
+                    levelToSet = Integer.parseInt(boxLevel.getText());
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent event) {
+
+            }
+        });
         levelMode.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -422,7 +501,7 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
             kryo.register(BigModePacket.class);
 
             client.start();
-            client.connect(10000,"173.56.93.54", 45666,45777 );
+            client.connect(10000,"127.0.0.1", 45666,45777 );
 
 
         }catch(Exception ex){ex.printStackTrace();}
@@ -431,7 +510,7 @@ public class GameServer extends JFrame implements MouseListener,MouseMotionListe
         {
             public void received(Connection connection, Object object)
             {
-                repaint();
+              //  repaint();
 
                 //      System.out.print("R\n");
                 if(object instanceof BigModePacket)

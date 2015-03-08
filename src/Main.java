@@ -160,7 +160,7 @@ public class Main extends JFrame implements KeyListener {
             kryo.register(BigModePacket.class);
 
             client.start();
-            client.connect(10000,"173.56.93.54", 45666,45777 );
+            client.connect(10000,"127.0.0.1", 45666,45777 );
 
 
         }catch(Exception ex){ex.printStackTrace();}
@@ -169,7 +169,7 @@ public class Main extends JFrame implements KeyListener {
       {
           public void received(Connection connection, Object object)
           {
-              repaint();
+          //    repaint();
 
         //      System.out.print("R\n");
 
@@ -216,7 +216,7 @@ public class Main extends JFrame implements KeyListener {
               {
                   BallPacket ballPacket = (BallPacket)object;
                   ball.setBounds(ballPacket.getX(),ballPacket.getY(), ballPacket.getWidth(), ballPacket.getHeight());
-                  repaint();
+                 // repaint();
                   score = ballPacket.getScore();
                   //Math.toDegrees();
               }
